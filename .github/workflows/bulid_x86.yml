@@ -1,4 +1,4 @@
-name: Build for OpenWrt (x86)
+name: Build for OpenWrt
 
 on: [push, workflow_dispatch]
 
@@ -16,19 +16,29 @@ jobs:
         with:
           dotnet-version: ${{ env.DOTNET_SDK_VERSION }}
 
-      - name: Publish for OpenWrt (x86 musl)
+      - name: Publish for OpenWrt (musl)
         run: |
-          dotnet publish BBDown -r linux-musl-x64 -c Release --self-contained true -o artifact # 针对 musl libc 的 x64 构建
+          dotnet publish BBDown -r linux-musl-x64 -c Release --self-contained true -o artifact-x64 # 针对 musl libc 的 x64 构建
           # 如果你的OpenWrt是32位的x86，则使用 linux-musl-x86
-          # dotnet publish BBDown -r linux-musl-x86 -c Release --self-contained true -o artifact
+          dotnet publish BBDown -r linux-musl-x86 -c Release --self-contained true -o artifact
 
       - name: Package for OpenWrt
         run: |
+          cd artifact-x64
+          # tar -czvf BBDown_openwrt_x86.tar.gz * # 使用 tar.gz 压缩
+          zip ../BBDown_${{ needs.set-date.outputs.date }}_OpenWrt-x64.zip BBDown
           cd artifact
-          tar -czvf BBDown_openwrt_x86.tar.gz * # 使用 tar.gz 压缩
+          # tar -czvf BBDown_openwrt_x86.tar.gz * # 使用 tar.gz 压缩
+          zip ../BBDown_${{ needs.set-date.outputs.date }}_OpenWrt-x86.zip BBDown
 
-      - name: Upload Artifact
+      - name: Upload Artifact [OpenWrt-x64]
         uses: actions/upload-artifact@v3.1.3
         with:
-          name: BBDown_openwrt_x86
-          path: BBDown_openwrt_x86.tar.gz
+          name: BBDown_OpenWrt-x64
+          path: BBDown_${{ needs.set-date.outputs.date }}_OpenWrt-x64.zip
+
+      - name: Upload Artifact[OpenWrt-x86]
+        uses: actions/upload-artifact@v3.1.3
+        with:
+          name: BBDown_OpenWrt-x86
+          path: BBDown_${{ needs.set-date.outputs.date }}_OpenWrt-x86.zip

@@ -75,7 +75,6 @@ public class SpaceVideoFetcher : IFetcher
         return title;
     }
 
-
     private async Task DownloadVideosAsync(List<string> urls)
     {
         string executableName = RuntimeInformation.IsOSPlatform(OSPlatform.Windows) ? "BBDown.exe" : "BBDown";

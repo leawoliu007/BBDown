@@ -400,7 +400,7 @@ partial class Program
             p.points = await FetchPointsAsync(p.cid, p.aid);
 
             string videoPath = $"{p.aid}/{p.aid}.P{p.index}.{p.cid}.mp4";
-            string audioPath = $"{p.aid}/{p.aid}.P{p.index}.{p.cid}.m4a";
+            string audioPath = $"{p.aid}/{p.aid}.P{p.index}.{p.cid}.mp3";
             var coverPath = $"{p.aid}/{p.aid}.jpg";
 
             //处理文件夹以.结尾导致的异常情况
@@ -644,7 +644,7 @@ partial class Program
 
                 if (selectedBackgroundAudio != null)
                 {
-                    var backgroundPath = $"{p.aid}/{p.aid}.{p.cid}.P{p.index}.back_ground.m4a";
+                    var backgroundPath = $"{p.aid}/{p.aid}.{p.cid}.P{p.index}.back_ground.mp3";
                     Log($"开始下载P{p.index}背景配音...");
                     await DownloadTrackAsync(selectedBackgroundAudio.baseUrl, backgroundPath, downloadConfig, video: false);
                     audioMaterial.Add(new AudioMaterial("背景音频", "", backgroundPath));
@@ -666,7 +666,7 @@ partial class Program
                 if (myOption.SkipMux) return;
                 Log($"开始合并音视频{(subtitleInfo.Any() ? "和字幕" : "")}...");
                 if (myOption.AudioOnly)
-                    savePath = savePath[..^4] + ".m4a";
+                    savePath = savePath[..^4] + ".mp3";
 
                 var isHevc = selectedVideo?.codecs == "HEVC";
                 int code = BBDownMuxer.MuxAV(myOption.UseMP4box, p.bvid, videoPath, audioPath, audioMaterial, savePath,
@@ -757,7 +757,7 @@ partial class Program
                 if (myOption.SkipMux) return;
                 Log($"开始混流视频{(subtitleInfo.Any() ? "和字幕" : "")}...");
                 if (myOption.AudioOnly)
-                    savePath = savePath[..^4] + ".m4a";
+                    savePath = savePath[..^4] + ".mp3";
                 int code = BBDownMuxer.MuxAV(false, p.bvid, videoPath, "", audioMaterial, savePath,
                     desc,
                     title,

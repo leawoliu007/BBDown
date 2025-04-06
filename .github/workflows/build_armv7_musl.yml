@@ -4,7 +4,7 @@ on: [workflow_dispatch]
 
 env:
   DOTNET_SDK_VERSION: '9.0.*'
-  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
+  ALPINE_VERSION: '3.21'  # 选择与.NET 9.0兼容的Alpine版本
 
 jobs:
   set-date:
@@ -12,27 +12,55 @@ jobs:
     outputs:
       date: ${{ steps.get_date.outputs.date }}
     steps:
-      - name: Get Date in UTC+8
+      - name: Get UTC+8 Date
         id: get_date
         run: echo "date=$(date -u -d '8 hours' +'%Y%m%d')" >> "$GITHUB_OUTPUT"
-        
-  # 新增矩阵策略
-  build-linux:
+
+  build-alpine:
     runs-on: ubuntu-latest
     needs: set-date
     strategy:
-      matrix:
-        target: [linux-arm]
+      matrix:        
+        arch: [arm]  #arch: [x64, arm64, arm]  # 支持x64/arm64/armv7架构
     steps:
+      # 使用Alpine容器化环境
+      - name: Setup Alpine
+        uses: jirutka/setup-alpine@v1  # 容器化Alpine环境
+        with:
+          branch: v${{ env.ALPINE_VERSION }}
+          arch: ${{ matrix.arch }}  # 自动处理QEMU模拟
+          packages: |
+            dotnet9-sdk
+            gcc
+            musl-dev
+            zlib-dev
+            # ARMv7需额外依赖
+            ${{ matrix.arch == 'arm' && 'gcc-arm-linux-gnueabihf' || '' }}
+
       - uses: actions/checkout@v4
-      - name: Setup musl toolchain (ARMv7 only)
-        if: matrix.target == 'linux-arm'
+
+      # 配置.NET环境
+      - name: Setup .NET SDK
         run: |
-          docker run --rm -v $(pwd):/work messense/rust-musl-cross:armv7-musleabihf
-      - name: Publish
-        run: dotnet publish BBDown -r ${{ matrix.target }} -c Release -o artifact-${{ matrix.target }}
-      - name: Upload Artifacts
+          apk update && apk add dotnet9-sdk
+
+      # 编译发布
+      - name: Publish for Alpine
+        run: |
+          RID="linux-musl-${{ matrix.arch }}"  # Alpine使用musl标识
+          dotnet publish BBDown -r $RID -c Release \
+            -p:PublishAot=true \  # 启用原生AOT
+            -p:StripSymbols=false \
+            -o artifact-$RID
+
+      # 打包上传
+      - name: Package Artifacts
+        run: |
+          cd artifact-linux-musl-${{ matrix.arch }}
+          zip ../BBDown_${{ needs.set-date.outputs.date }}_alpine-${{ matrix.arch }}.zip BBDown
+
+      - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: BBDown_${{ matrix.target }}
-          path: BBDown_${{ needs.set-date.outputs.date }}_${{ matrix.target }}.zip
+          name: BBDown_alpine-${{ matrix.arch }}
+          path: BBDown_${{ needs.set-date.outputs.date }}_alpine-${{ matrix.arch }}.zip

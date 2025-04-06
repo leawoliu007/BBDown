@@ -3,6 +3,7 @@
   <PropertyGroup>
     <OutputType>library</OutputType>
     <TargetFramework>net9.0</TargetFramework>
+    <RuntimeIdentifier>linux-musl-arm</RuntimeIdentifier>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>

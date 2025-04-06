@@ -21,7 +21,7 @@ jobs:
     needs: set-date
     strategy:
       matrix:        
-        arch: [arm]  #arch: [x64, arm64, arm]  # 支持x64/arm64/armv7架构
+        arch: [armv7]  #arch: [x64, arm64, arm]  # 支持x64/arm64/armv7架构
     steps:
       # 使用Alpine容器化环境
       - name: Setup Alpine
@@ -35,7 +35,7 @@ jobs:
             musl-dev
             zlib-dev
             # ARMv7需额外依赖
-            ${{ matrix.arch == 'arm' && 'gcc-arm-linux-gnueabihf' || '' }}
+            ${{ matrix.arch == 'armv7' && 'gcc-arm-linux-gnueabihf' || '' }}
 
       - uses: actions/checkout@v4
 

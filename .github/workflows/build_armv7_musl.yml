@@ -16,25 +16,23 @@ jobs:
         id: get_date
         run: echo "date=$(date -u -d '8 hours' +'%Y%m%d')" >> "$GITHUB_OUTPUT"
         
-  build-linux-armv7:
+  # 新增矩阵策略
+  build-linux:
     runs-on: ubuntu-latest
     needs: set-date
-    container: messense/rust-musl-cross:armv7-musleabihf  # 使用预配置的Docker镜像
+    strategy:
+      matrix:
+        target: [linux-arm]
     steps:
       - uses: actions/checkout@v4
-      - name: Setup .NET SDK
-        uses: actions/setup-dotnet@v3
-        with:
-          dotnet-version: ${{ env.DOTNET_SDK_VERSION }}
-      - name: Publish for ARMv7 (musl)
+      - name: Setup musl toolchain (ARMv7 only)
+        if: matrix.target == 'linux-arm'
         run: |
-          dotnet publish BBDown -r linux-arm -c Release -o artifact-armv7  # 指定ARMv7运行时
-      - name: Package artifact
-        run: |
-          cd artifact-armv7
-          zip ../BBDown_${{ needs.set-date.outputs.date }}_linux-armv7.zip BBDown
-      - name: Upload Artifact
+          docker run --rm -v $(pwd):/work messense/rust-musl-cross:armv7-musleabihf
+      - name: Publish
+        run: dotnet publish BBDown -r ${{ matrix.target }} -c Release -o artifact-${{ matrix.target }}
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: BBDown_linux-armv7
-          path: BBDown_${{ needs.set-date.outputs.date }}_linux-armv7.zip
+          name: BBDown_${{ matrix.target }}
+          path: BBDown_${{ needs.set-date.outputs.date }}_${{ matrix.target }}.zip

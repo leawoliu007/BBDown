@@ -38,13 +38,12 @@ jobs:
 
       - uses: actions/checkout@v4
 
-      # 配置.NET环境 (Runs inside the Alpine container)
+      # 配置.NET环境 (Runs inside the Alpine container due to setup-alpine)
       - name: Setup .NET SDK
         run: |
           apk update && apk add dotnet9-sdk
-        shell: alpine.sh # Ensure this runs within the Alpine environment
 
-      # 编译发布 (Runs inside the Alpine container)
+      # 编译发布 (Runs inside the Alpine container due to setup-alpine)
       - name: Publish for Alpine
         run: |
           RID="linux-musl-${{ matrix.arch }}"  # Alpine使用musl标识
@@ -52,14 +51,12 @@ jobs:
             -p:PublishAot=true \  # 启用原生AOT
             -p:StripSymbols=false \
             -o artifact-$RID
-        shell: alpine.sh # Ensure this runs within the Alpine environment
 
-      # 打包上传 (Runs inside the Alpine container)
+      # 打包上传 (Runs inside the Alpine container due to setup-alpine)
       - name: Package Artifacts
         run: |
           cd artifact-linux-musl-${{ matrix.arch }}
           zip ../BBDown_${{ needs.set-date.outputs.date }}_alpine-${{ matrix.arch }}.zip BBDown
-        shell: alpine.sh # Ensure this runs within the Alpine environment
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
